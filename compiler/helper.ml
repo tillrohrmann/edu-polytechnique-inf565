@@ -1,5 +1,6 @@
 open Ml_syntax
 open Interpretation
+open Types
 
 let indentSign = "  "
 
@@ -49,7 +50,7 @@ let rec printProgramExpression indent expression =
 		print_string (indent_string^")\n")*)
 		print_string ("fun "^arg^" ->\n");
 		printProgramExpression (indent+1) d
-	| Function (f,a,d,b) -> 
+	| Recursive_function (f,a,d,b) -> 
 		(*print_string "Recursive Function(\n";
 		print_string (indent_string^indentSign^"Name("^f^")\n");
 		print_string (indent_string^indentSign^"Argument("^a^")\n");
@@ -85,6 +86,8 @@ let rec printProgramExpression indent expression =
 		printProgramExpression (indent+1) e;
 		print_string (indent_string^")\n")
 	| DeBruijn_variable (v,c) -> print_string ("Variable("^v^","^string_of_int c^")\n")
+	| DeBruijn_variable_rec (v,c) -> print_string ("Data("^v^","^string_of_int c^")\n")
+
 
 let rec printProgram indent = function
 	| Program p -> 
@@ -92,12 +95,10 @@ let rec printProgram indent = function
 		print_string (indent_string^"Program(\n");
 		printProgramExpression (indent+1) p;
 		print_string (indent_string^")\n")
-	| _ -> failwith "printProgram was expecting a node of type program\n"
 	
 let prettyPrintAST ast = match ast 
 	with 
 	| Program _ -> printProgram 0 ast
-	| _ -> failwith "First node has to be of type program\n"
 	
 let rec prettyPrintInterpretationResult indent result = 
 	let indent_string = createIndent(indent) in
@@ -118,3 +119,34 @@ let rec prettyPrintInterpretationResult indent result =
 		in
 		helper closure;
 		print_string (indent_string^")\n")
+		
+let prettyPrintExpType exp chrMode =
+	let start = ref (Char.code 'a') in
+	let map = Hashtbl.create 20 in
+	let rec helper exp brackets= 
+		match exp with
+			| Bool -> print_string "bool"
+			| Int -> print_string "int"
+			| Function(a,b) -> 
+				if brackets then print_string"(" else ();
+				helper a true;
+				print_string " -> ";
+				helper b false;
+				if brackets then print_string")" else ()
+			| Type_variable i -> 
+				if chrMode then
+					let sign =
+					(try Hashtbl.find map i 
+					with 
+						| _ -> 
+							Hashtbl.replace map i (Char.chr !start); 
+							let result = (Char.chr !start) in 
+							start := !start +1;
+							result)
+					in
+					print_string ("'"^Char.escaped sign)
+				else
+					print_string ("'"^string_of_int i)
+	in
+	helper exp false;
+	print_string "\n"

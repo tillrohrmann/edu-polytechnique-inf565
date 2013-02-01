@@ -56,7 +56,7 @@ local_definition:
 	| LET IDENTIFIER EQUALS program_expression IN program_expression %prec LET { Local_definition($2,$4,$6) }
 	
 recursive_function:
-	| LET REC IDENTIFIER IDENTIFIER EQUALS program_expression IN program_expression %prec LET { Function($3,$4,$6,$8) }
+	| LET REC IDENTIFIER IDENTIFIER EQUALS program_expression IN program_expression %prec LET { Recursive_function($3,$4,$6,$8) }
 	
 anonymous_function:
 	| FUN IDENTIFIER ARROW program_expression %prec FUN { Anonymous_function($2,$4) }

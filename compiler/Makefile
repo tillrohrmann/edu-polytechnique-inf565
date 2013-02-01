@@ -9,7 +9,7 @@ OCAMLFLAGS=     -warn-error -a $(OCAMLINCLUDES)
 OCAMLC=         $(OCAMLPREFIX)ocamlc
 OCAMLOPT=       $(OCAMLPREFIX)ocamlopt
 
-OUTPUT:=compiler
+OUTPUT:=runner
 
 %.ml: %.mll
 	$(OCAMLLEX) $*.mll
@@ -30,14 +30,18 @@ AUTOGEN_ML=	ml_parser.ml ml_lexer.ml
 AUTOGEN_MLI=    ml_parser.mli
 AUTOGEN= $(AUTOGEN_ML) $(AUTOGEN_MLI)
 ML_FILES=	ml_syntax.ml \
+			types.ml \
 		$(AUTOGEN_ML) \
 		helper.ml \
 		elaboration.ml \
 		interpretation.ml \
-		compiler.ml
+		typing.ml \
+		stackMachine.ml \
+		compiler.ml \
+		runner.ml
 CMO_FILES=	$(ML_FILES:%.ml=%.cmo)
 CMX_FILES=      $(ML_FILES:%.ml=%.cmx)
-compiler: $(CMX_FILES) $(AUTOGEN)
+$(OUTPUT): $(CMX_FILES) $(AUTOGEN)
 	ocamlopt $(CMX_FILES) -o $(OUTPUT)
 
 depend: $(AUTOGEN_ML) $(ML_FILES)

@@ -84,30 +84,29 @@ let binary_operation op a b =
 	| Greater -> Boolean(greater a b)
 		
 let interprete prog = 
-	let rec helper state closure = function
+	let rec helper state recursive_definitions closure = function
 		| Boolean_constant b -> Boolean(b)
 		| Integer_constant i -> Integer(i)
 		| Variable v -> failwith "Program has to be transformed to use De Bruijn indices"
 		| DeBruijn_variable (v,i) -> List.nth state (i-1)
+		| DeBruijn_variable_rec(v,i) -> List.nth recursive_definitions (i-1)
 		| Anonymous_function (a,d) -> Function_value(a,d,closure)
 		| Local_definition (i,d,b) -> 
-			let new_state = (helper state [] d)::state in
-			helper new_state [] b
+			helper state ((helper state recursive_definitions [] d)::recursive_definitions) [] b
 		| If_then_else (c,t,e) -> 
-			let result = helper state [] c in
+			let result = helper state recursive_definitions [] c in
 			(match result with
-			| Boolean b -> if b then helper state [] t else helper state [] e
+			| Boolean b -> if b then helper state recursive_definitions [] t else helper state recursive_definitions [] e
 			| _ -> failwith "If condition has to have a boolean type")
 		| Function_application (f,a) -> 
-			let functionValue = helper state [] f in
+			let functionValue = helper state recursive_definitions [] f in
 			(match functionValue with
 			| Function_value (par,def,closure) ->
-				let aValue = helper state [] a in
-				helper (aValue::closure@state) (aValue::closure) def
+				let aValue = helper state recursive_definitions [] a in
+				helper (aValue::closure@state) recursive_definitions (aValue::closure) def
 			| _ -> failwith "Function_application expects a function type")
-		| Function(f,p,d,b) -> helper (Function_value(p,d,[])::state) [] b
-		| Binary(op,a,b) -> binary_operation op (helper state [] a) (helper state [] b)
+		| Recursive_function(f,p,d,b) -> helper state (Function_value(p,d,[])::recursive_definitions) [] b
+		| Binary(op,a,b) -> binary_operation op (helper state recursive_definitions [] a) (helper state recursive_definitions [] b)
 	in
 	match prog with
-	| Program exp -> helper [] [] exp
-	| _ -> failwith "Value of type program expected"
+	| Program exp -> helper [] [] [] exp

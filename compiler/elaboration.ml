@@ -2,26 +2,30 @@ open Ml_syntax
 
 let rec getIndex indices v = 
 	match indices with
-	| [] -> 0
-	| (id,count)::t -> if v = id then count else getIndex t v
+	| [] -> (0,false)
+	| (id,count,recursive)::t -> if v = id then (count,recursive) else getIndex t v
 	
-let addIdentifier indices v =
-	let rec helper indices v result found =
+let addIdentifier indices v recursive =
+	let rec helper indices result found =
 		match indices with
-		| [] -> if found = true then result else (v,1)::result
-		| (id,count)::t -> if id = v then helper t v ((id,1)::result) true else helper t v ((id,count+1)::result) false
+		| [] -> if found = true then result else (v,1,recursive)::result
+		| (id,count,r)::t -> 
+			if id = v then helper t ((id,1,recursive)::result) true 
+			else let new_count = if r = recursive then count+1 else count in
+			helper t ((id,new_count,r)::result) found
 	in
-	helper indices v [] false
+	helper indices [] false
 
 let conditionalTransform prog =
 	let rec conditionalTransformHelper = function
 		| Variable v -> Variable v
 		| DeBruijn_variable (v,c) -> DeBruijn_variable(v,c)
+		| DeBruijn_variable_rec(v,c) -> DeBruijn_variable_rec(v,c)
 		| Integer_constant i -> Integer_constant i
 		| Boolean_constant b -> Boolean_constant b
 		| Function_application (f,a) -> Function_application (conditionalTransformHelper f,conditionalTransformHelper a)
 		| Anonymous_function (i,d) -> Anonymous_function (i,conditionalTransformHelper d)
-		| Function (f,p,d,b) -> Function(f,p,conditionalTransformHelper d, conditionalTransformHelper b)
+		| Recursive_function (f,p,d,b) -> Recursive_function(f,p,conditionalTransformHelper d, conditionalTransformHelper b)
 		| Local_definition (i,d,b) -> Local_definition(i,conditionalTransformHelper d, conditionalTransformHelper b)
 		| If_then_else (c,t,e) -> If_then_else(conditionalTransformHelper c, conditionalTransformHelper t, conditionalTransformHelper e)
 		| Binary (op,a,b) ->
@@ -58,29 +62,29 @@ let conditionalTransform prog =
 	in
 	match prog with
 	| Program e -> Program (conditionalTransformHelper e)
-	| _ -> prog
-	
+
 let deBruijnTransform prog =
 	let indices = [] in
 	let rec deBruijnTransformHelper indices = function
-		| Variable v -> DeBruijn_variable(v,getIndex indices v)
+		| Variable v -> let (index,recursive) = getIndex indices v in
+			if recursive then DeBruijn_variable_rec(v,index) else DeBruijn_variable(v,index)
 		| DeBruijn_variable(v,c) -> DeBruijn_variable(v,c)
+		| DeBruijn_variable_rec(v,c) -> DeBruijn_variable_rec(v,c)
 		| Integer_constant i -> Integer_constant i
 		| Boolean_constant b -> Boolean_constant b
 		| Function_application (f,a) -> Function_application(deBruijnTransformHelper indices f, deBruijnTransformHelper indices a)
 		| Anonymous_function (i,d) -> 
-			let new_indices = addIdentifier indices i in
+			let new_indices = addIdentifier indices i false in
 			Anonymous_function(i, deBruijnTransformHelper new_indices d)
-		| Function(f,p,d,b) -> 
-			let new_indices = addIdentifier (addIdentifier indices f) p in
-			let body_indices = addIdentifier indices f in
-			Function(f,p,deBruijnTransformHelper new_indices d, deBruijnTransformHelper body_indices b)
+		| Recursive_function(f,p,d,b) -> 
+			let new_indices = addIdentifier (addIdentifier indices f true) p false in
+			let body_indices = addIdentifier indices f true in
+			Recursive_function(f,p,deBruijnTransformHelper new_indices d, deBruijnTransformHelper body_indices b)
 		| Local_definition(i,d,b) -> 
-			let new_indices = addIdentifier indices i in
+			let new_indices = addIdentifier indices i true in
 			Local_definition(i,deBruijnTransformHelper indices d, deBruijnTransformHelper new_indices b)
 		| If_then_else (c,t,e) -> If_then_else(deBruijnTransformHelper indices c, deBruijnTransformHelper indices t, deBruijnTransformHelper indices e)
 		| Binary(op,a,b) -> Binary(op,deBruijnTransformHelper indices a, deBruijnTransformHelper indices b)
 	in 
 	match prog with
 	| Program e -> Program (deBruijnTransformHelper indices e)
-	| _ -> prog
