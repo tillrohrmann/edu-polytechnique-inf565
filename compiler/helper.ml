@@ -86,7 +86,6 @@ let rec printProgramExpression indent expression =
 		printProgramExpression (indent+1) e;
 		print_string (indent_string^")\n")
 	| DeBruijn_variable (v,c) -> print_string ("Variable("^v^","^string_of_int c^")\n")
-	| DeBruijn_variable_rec (v,c) -> print_string ("Data("^v^","^string_of_int c^")\n")
 
 
 let rec printProgram indent = function
@@ -105,7 +104,7 @@ let rec prettyPrintInterpretationResult indent result =
 	match result with
 	| Integer i -> print_string (indent_string^"Integer("^string_of_int i^")\n")
 	| Boolean b -> print_string (indent_string^"Boolean("^string_of_bool b ^")\n")
-	| Function_value (par,def,closure) -> print_string (indent_string^"Function_value(\n");
+	| Function_value (par,def,closure,recursive) -> print_string (indent_string^(if recursive then "rec " else "")^"Function_value(\n");
 		print_string (indent_string^indentSign^"fun "^par^" ->\n");
 		printProgramExpression 2 def;
 		print_string (indent_string^")\n");
@@ -147,6 +146,7 @@ let prettyPrintExpType exp chrMode =
 					print_string ("'"^Char.escaped sign)
 				else
 					print_string ("'"^string_of_int i)
+			| Universal t -> helper t false
 	in
 	helper exp false;
 	print_string "\n"

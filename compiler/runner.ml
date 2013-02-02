@@ -25,10 +25,17 @@ let main() =
   		Helper.prettyPrintAST e_prog;
   		let deBruijn_prog = Elaboration.deBruijnTransform e_prog in
   		Helper.prettyPrintAST deBruijn_prog;
+			print_string "Typing program...\n";
 			let prog_type = Typing.program_type deBruijn_prog in
 			Helper.prettyPrintExpType prog_type true;
+			print_string "Interpreting program...\n";
 			let prog_result = Interpretation.interprete deBruijn_prog in
   		Helper.prettyPrintInterpretationResult 0 prog_result;
+			print_string "Compiling...\n";
+			let prog_compiled = Compiler.compileProgram deBruijn_prog in
+			print_string ((StackMachine.string_of_commands prog_compiled)^"\n");
+			print_string "Running stack machine...\n";
+			StackMachine.execute prog_compiled;
 			Printf.printf "finished yeah...\n"
     		
 let _ = main()

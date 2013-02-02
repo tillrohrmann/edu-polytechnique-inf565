@@ -29,7 +29,8 @@ all: $(OUTPUT)
 AUTOGEN_ML=	ml_parser.ml ml_lexer.ml
 AUTOGEN_MLI=    ml_parser.mli
 AUTOGEN= $(AUTOGEN_ML) $(AUTOGEN_MLI)
-ML_FILES=	ml_syntax.ml \
+ML_FILES=	debug.ml \
+			ml_syntax.ml \
 			types.ml \
 		$(AUTOGEN_ML) \
 		helper.ml \

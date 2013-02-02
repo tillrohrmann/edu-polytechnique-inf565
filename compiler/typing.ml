@@ -123,10 +123,6 @@ let rec expression_type env env_rec mapping exp =
 		(match getType mapping (List.nth env (i-1)) with
 			| Universal t -> generalizeType env env_rec mapping t
 			| _ as r -> r)
-	| DeBruijn_variable_rec (v,i) -> 
-			(match getType mapping (List.nth env_rec (i-1)) with
-			| Universal t -> generalizeType env env_rec mapping t
-			| _ as r -> r)
 	| Anonymous_function (p,d) -> 
 		let newTypeVar = getNewTypeVariable mapping in
 		let result = expression_type (newTypeVar::env) env_rec mapping d in
@@ -134,8 +130,8 @@ let rec expression_type env env_rec mapping exp =
 	| Recursive_function (f,p,d,b) -> 
 		let funType = getNewTypeVariable mapping in
 		let parType = getNewTypeVariable mapping in
-		let resultFunType = expression_type (parType::env) (funType::env_rec) mapping d in
-		expression_type env (Universal(Function (getType mapping parType,resultFunType))::env_rec) mapping b
+		let resultFunType = expression_type (parType::funType::env) (env_rec) mapping d in
+		expression_type (Universal(Function (getType mapping parType,resultFunType))::env) (env_rec) mapping b
 	| Function_application (f,a) -> 
 		let funType = expression_type env env_rec mapping f in
 		let argumentType = expression_type env env_rec mapping a in
@@ -165,7 +161,7 @@ let rec expression_type env env_rec mapping exp =
 		| _ -> failwith "The expression is not a function.")
 	| Local_definition (v,d,b) -> 
 		let v_type = expression_type env env_rec mapping d in
-		expression_type env ((Universal v_type)::env_rec) mapping b
+		expression_type ((Universal v_type)::env) (env_rec) mapping b
 	| If_then_else (c,t,e) ->
 		let condition_type = expression_type env env_rec mapping c in
 		if condition_type != Bool then
