@@ -19,9 +19,13 @@ and program_exp =
 	| DeBruijn_variable of identifier*int
 	| Binary of operation*program_exp*program_exp
 	| Function_application of program_exp*program_exp
+	(* parameter name * function body *)
 	| Anonymous_function of identifier*program_exp
+	(* function name * parameter name * function body * following block *)
 	| Recursive_function of identifier*identifier*program_exp*program_exp
+	(* variable name * value definition * following block *)
 	| Local_definition of identifier*program_exp*program_exp
+	(* if condition * then block * else block *)
 	| If_then_else of program_exp*program_exp*program_exp
 	
 and program = Program of program_exp

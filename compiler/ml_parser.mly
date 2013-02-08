@@ -2,8 +2,6 @@
 
 open Ml_syntax
 
-(* | binary_operation {$1}| variable {$1}| constant {$1}     *)
-
 %}
 
 %token LAND LOR PLUS MINUS DIV MULT F IF THEN ELSE
@@ -21,6 +19,7 @@ open Ml_syntax
 %type <Ml_syntax.program_exp> arithmetic_operation
 %type <Ml_syntax.program_exp> logical_operation
 %type <Ml_syntax.program_exp> binary_operation
+
 
 %right FUN LET IF
 %left EQUALS GREATER

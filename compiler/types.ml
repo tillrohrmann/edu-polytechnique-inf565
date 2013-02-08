@@ -1,3 +1,12 @@
 open Ml_syntax
+  
+type ml_types =
+  | Int
+  | Bool
+  | Function of ml_types * ml_types
+  | Type_variable of int
+	(* Universal quantifying over all type variables. This is needed for the *)
+	(* Hindley-Milner algorithm. *)
+  | Universal of ml_types
 
-type ml_types = Int | Bool | Function of ml_types*ml_types | Type_variable of int | Universal of ml_types
+
