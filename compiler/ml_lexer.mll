@@ -36,6 +36,7 @@ rule token = parse
 	| "then" {THEN}
 	| "else" {ELSE}
 	| ">" {GREATER}
+	| ";" {SEMICOLON}
 	| identifier {IDENTIFIER(Lexing.lexeme lexbuf)}
 	| integer {INTEGER(int_of_string (Lexing.lexeme lexbuf))}
 	| eof { EOF }

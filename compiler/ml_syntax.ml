@@ -27,6 +27,7 @@ and program_exp =
 	| Local_definition of identifier*program_exp*program_exp
 	(* if condition * then block * else block *)
 	| If_then_else of program_exp*program_exp*program_exp
+	| Expression_block of program_exp*program_exp
 	
 and program = Program of program_exp
 

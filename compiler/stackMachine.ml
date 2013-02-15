@@ -15,6 +15,7 @@ and commands =
   | Op of operations
   | Push of values
   | Rec of commands list
+	| Pop
 
 (* values which can be used in the command stream *)
 and values =
@@ -93,6 +94,7 @@ let rec string_of_commands cmds =
     | Op op -> "Operation " ^ (string_of_operations op)
     | Push value -> "Push " ^ (string_of_value value)
     | Rec cmds -> "Rec (" ^ ((string_of_commands cmds) ^ ")")
+		| Pop -> "Pop"
   in
     match cmds with
     | [] -> ""
@@ -194,6 +196,7 @@ let rec executeStackMachine =
   | (Push (Int i) :: c, e, s, r) ->
       (Debug.debug ("Push " ^ (string_of_int i));
        executeStackMachine (c, e, ((EnvInt i) :: s), r))
+	| (Pop ::c, e,h::s,r) -> executeStackMachine(c,e,s,r)
   | _ -> failwith "Invalid stack machine state.\n"
   
 let execute cmds = executeStackMachine (cmds, [], [], [])

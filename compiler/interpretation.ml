@@ -215,6 +215,9 @@ let rec calcClosureDeBruijn boundedThreshold =
   | Binary (op, a, b) ->
       max (calcClosureDeBruijn boundedThreshold a)
         (calcClosureDeBruijn boundedThreshold b)
+	| Expression_block(e1,e2) ->
+			max (calcClosureDeBruijn boundedThreshold e1)
+				(calcClosureDeBruijn boundedThreshold e2)
 
 (**
 	This function retrieves the first number elements of the list state. 
@@ -295,6 +298,8 @@ let interprete prog =
             ((Function_value (p, d, (head state closureThreshold), true)) ::
               state)
             [] b
+		| Expression_block(e1,e2) ->
+				ignore (helper state closure e1); helper state closure e2
     | Binary (op, a, b) ->
         binary_operation op (helper state [] a) (helper state [] b)
   in match prog with | Program exp -> helper [] [] exp

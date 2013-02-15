@@ -4,7 +4,7 @@ open Ml_syntax
 
 %}
 
-%token LAND LOR PLUS MINUS DIV MULT F IF THEN ELSE
+%token LAND LOR PLUS MINUS DIV MULT F IF THEN ELSE SEMICOLON
 %token LBRACKET RBRACKET
 %token LET EQUALS IN ARROW FUN REC GREATER
 %token TRUE FALSE
@@ -22,6 +22,7 @@ open Ml_syntax
 
 
 %right FUN LET IF
+%left SEMICOLON
 %left EQUALS GREATER
 %left UMINUS UPLUS
 %left LOR
@@ -44,9 +45,13 @@ program_expression:
 	| anonymous_function {$1}
 	| function_application {$1}
 	| binary_operation {$1}
+	| expression_block {$1}
 	| variable {$1}
 	| constant {$1}
 	| condition {$1}
+
+expression_block:
+	| program_expression SEMICOLON program_expression { Expression_block($1,$3) }
 	
 condition:
 	| IF program_expression THEN program_expression ELSE program_expression %prec IF {If_then_else($2,$4,$6)}

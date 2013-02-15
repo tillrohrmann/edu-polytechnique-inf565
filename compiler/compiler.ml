@@ -48,6 +48,8 @@ let rec compileExpression exp =
   | Local_definition (id, d, b) ->
       (compileExpression d) @
         ([ Let ] @ ((compileExpression b) @ [ Endlet ]))
+	| Expression_block(e1,e2) ->
+			(compileExpression e1) @ [ Pop ] @ (compileExpression e2)
   | If_then_else (c, t, e) ->
       let thenCode = compileExpression t in
       let elseCode = compileExpression e

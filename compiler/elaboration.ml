@@ -76,6 +76,8 @@ let conditionalTransform prog =
     | If_then_else (c, t, e) ->
         If_then_else ((conditionalTransformHelper c),
           (conditionalTransformHelper t), (conditionalTransformHelper e))
+		| Expression_block (e1, e2) ->
+				Expression_block(conditionalTransformHelper e1,conditionalTransformHelper e2)
     | Binary (op, a, b) ->
         let ac = conditionalTransformHelper a in
         let bc = conditionalTransformHelper b
@@ -154,6 +156,8 @@ let deBruijnTransform prog =
         in
           Local_definition (i, (deBruijnTransformHelper indices d),
             (deBruijnTransformHelper new_indices b))
+		| Expression_block (e1, e2) ->
+				Expression_block(deBruijnTransformHelper indices e1, deBruijnTransformHelper indices e2)
     | If_then_else (c, t, e) ->
         If_then_else ((deBruijnTransformHelper indices c),
           (deBruijnTransformHelper indices t),

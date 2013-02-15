@@ -97,6 +97,10 @@ let rec printProgramExpression indent expression =
           print_string (indent_string ^ "else(\n");
           printProgramExpression (indent + 1) e;
           print_string (indent_string ^ ")\n"))
+		 | Expression_block (e1,e2) ->
+					printProgramExpression indent e1;
+					print_string ";\n";
+					printProgramExpression indent e2
      | DeBruijn_variable (v, c) ->
          print_string
            ("Variable(" ^ (v ^ ("," ^ ((string_of_int c) ^ ")\n")))))

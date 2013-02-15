@@ -348,6 +348,11 @@ let rec expression_type env mapping exp =
   | Local_definition (v, d, b) ->
       let v_type = expression_type env mapping d
       in expression_type ((Universal v_type) :: env) mapping b
+	| Expression_block(e1,e2) ->
+			(* calculate e1, because there might be type variables which *)
+			(* are set within this expression. *)
+			ignore (expression_type env mapping e1);
+			expression_type env mapping e2
   | If_then_else (c, t, e) ->
       let condition_type = expression_type env mapping c
       in
