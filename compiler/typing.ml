@@ -167,6 +167,7 @@ let rec string_of_ml_types =
       (string_of_ml_types p) ^ (" -> " ^ (string_of_ml_types b))
   | Type_variable c -> "'" ^ (string_of_int c)
   | Universal t -> string_of_ml_types t
+	| Unit -> "unit"
 
 (**
 	This function calculates for a given binary operation the type.
@@ -353,6 +354,8 @@ let rec expression_type env mapping exp =
 			(* are set within this expression. *)
 			ignore (expression_type env mapping e1);
 			expression_type env mapping e2
+	| Keyword(Print_int) -> Function(Int,Unit)
+	| Keyword(Print_bool) -> Function(Bool,Unit)
   | If_then_else (c, t, e) ->
       let condition_type = expression_type env mapping c
       in

@@ -36,6 +36,18 @@ let getOperationString =
   | Greater -> ">"
 
 (**
+	This function gets the string representation of a keyword.
+	
+	@param keyword
+	
+	@return string representing the given operation
+*)
+let getKeywordString =
+	function
+		| Print_int -> "print_int"
+		| Print_bool -> "print_bool"
+
+(**
 	This function pretty prints a given expression of type program_expression at a given
 	indentation level. 
 	
@@ -47,63 +59,66 @@ let rec printProgramExpression indent expression =
   in
     (print_string indent_string;
      match expression with
-     | Integer_constant i ->
-         print_string ("Integer(" ^ ((string_of_int i) ^ ")\n"))
-     | Boolean_constant b ->
-         print_string ("Boolean(" ^ ((string_of_bool b) ^ ")\n"))
-     | Variable v -> print_string ("Variable(" ^ (v ^ ")\n"))
-     | Binary (op, a, b) ->
-         let operation_string = getOperationString op
-         in
-           (print_string (operation_string ^ "(\n");
-            printProgramExpression (indent + 1) a;
-            printProgramExpression (indent + 1) b;
-            print_string (indent_string ^ ")\n"))
-     | Function_application (f, a) ->
-         (print_string "Function application(\n";
-          print_string (indent_string ^ (indentSign ^ "Function(\n"));
-          printProgramExpression (indent + 2) f;
-          print_string (indent_string ^ (indentSign ^ ")\n"));
-          print_string (indent_string ^ (indentSign ^ "Argument(\n"));
-          printProgramExpression (indent + 2) a;
-          print_string (indent_string ^ (indentSign ^ ")\n"));
-          print_string (indent_string ^ ")\n"))
-     | Anonymous_function (arg, d) ->
-         (print_string ("fun " ^ (arg ^ " ->\n"));
-          printProgramExpression (indent + 1) d)
-     | Recursive_function (f, a, d, b) ->
-         (print_string ("Let rec " ^ (f ^ (" " ^ (a ^ " =\n"))));
-          printProgramExpression (indent + 1) d;
-          print_string (indent_string ^ "in\n");
-          printProgramExpression (indent + 1) b)
-     | Local_definition (v, d, b) ->
-         (print_string "Local definition(\n";
-          print_string
-            (indent_string ^ (indentSign ^ ("Name(" ^ (v ^ ")\n"))));
-          print_string (indent_string ^ (indentSign ^ "Definition(\n"));
-          printProgramExpression (indent + 2) d;
-          print_string (indent_string ^ (indentSign ^ ")\n"));
-          print_string (indent_string ^ (indentSign ^ "Block(\n"));
-          printProgramExpression (indent + 2) b;
-          print_string (indent_string ^ (indentSign ^ ")\n"));
-          print_string (indent_string ^ ")\n"))
-     | If_then_else (c, t, e) ->
-         (print_string "If(\n";
-          printProgramExpression (indent + 1) c;
-          print_string (indent_string ^ ")\n");
-          print_string (indent_string ^ "then(\n");
-          printProgramExpression (indent + 1) t;
-          print_string (indent_string ^ ")\n");
-          print_string (indent_string ^ "else(\n");
-          printProgramExpression (indent + 1) e;
-          print_string (indent_string ^ ")\n"))
-		 | Expression_block (e1,e2) ->
-					printProgramExpression indent e1;
-					print_string ";\n";
-					printProgramExpression indent e2
-     | DeBruijn_variable (v, c) ->
-         print_string
-           ("Variable(" ^ (v ^ ("," ^ ((string_of_int c) ^ ")\n")))))
+		 | Integer_constant i ->
+		     print_string ("Integer(" ^ ((string_of_int i) ^ ")\n"))
+		 | Boolean_constant b ->
+		     print_string ("Boolean(" ^ ((string_of_bool b) ^ ")\n"))
+		 | Variable v -> print_string ("Variable(" ^ (v ^ ")\n"))
+		 | Binary (op, a, b) ->
+		     let operation_string = getOperationString op
+		     in
+		       (print_string (operation_string ^ "(\n");
+		        printProgramExpression (indent + 1) a;
+		        printProgramExpression (indent + 1) b;
+		        print_string (indent_string ^ ")\n"))
+		 | Function_application (f, a) ->
+		     print_string "Function application(\n";
+		      print_string (indent_string ^ (indentSign ^ "Function(\n"));
+		      printProgramExpression (indent + 2) f;
+		      print_string (indent_string ^ (indentSign ^ ")\n"));
+		      print_string (indent_string ^ (indentSign ^ "Argument(\n"));
+		      printProgramExpression (indent + 2) a;
+		      print_string (indent_string ^ (indentSign ^ ")\n"));
+		      print_string (indent_string ^ ")\n")
+		 | Anonymous_function (arg, d) ->
+		     (print_string ("fun " ^ (arg ^ " ->\n"));
+		      printProgramExpression (indent + 1) d)
+		 | Recursive_function (f, a, d, b) ->
+		     (print_string ("Let rec " ^ (f ^ (" " ^ (a ^ " =\n"))));
+		      printProgramExpression (indent + 1) d;
+		      print_string (indent_string ^ "in\n");
+		      printProgramExpression (indent + 1) b)
+		 | Local_definition (v, d, b) ->
+		     (print_string "Local definition(\n";
+		      print_string
+		        (indent_string ^ (indentSign ^ ("Name(" ^ (v ^ ")\n"))));
+		      print_string (indent_string ^ (indentSign ^ "Definition(\n"));
+		      printProgramExpression (indent + 2) d;
+		      print_string (indent_string ^ (indentSign ^ ")\n"));
+		      print_string (indent_string ^ (indentSign ^ "Block(\n"));
+		      printProgramExpression (indent + 2) b;
+		      print_string (indent_string ^ (indentSign ^ ")\n"));
+		      print_string (indent_string ^ ")\n"))
+		 | If_then_else (c, t, e) ->
+		     (print_string "If(\n";
+		      printProgramExpression (indent + 1) c;
+		      print_string (indent_string ^ ")\n");
+		      print_string (indent_string ^ "then(\n");
+		      printProgramExpression (indent + 1) t;
+		      print_string (indent_string ^ ")\n");
+		      print_string (indent_string ^ "else(\n");
+		      printProgramExpression (indent + 1) e;
+		      print_string (indent_string ^ ")\n"))
+			| Expression_block (e1,e2) ->
+						print_string "Expression_block(\n";
+						printProgramExpression (indent+1) e1;
+						print_string (indent_string^indentSign^";\n");
+						printProgramExpression (indent+1) e2;
+						print_string (indent_string^")\n")
+			| Keyword(keyword) -> print_string ((getKeywordString keyword)^"\n")
+			| DeBruijn_variable (v, c) ->
+		     print_string
+		       ("Variable(" ^ (v ^ ("," ^ ((string_of_int c) ^ ")\n")))))
 
 (**
 	This function prints a program ( represented as an AST ) at a given indentation level. 
@@ -138,6 +153,7 @@ let rec prettyPrintInterpretationResult indent result =
   let indent_string = createIndent indent
   in
     match result with
+		| IUnit -> print_string (indent_string^"Unit\n")
     | Integer i ->
         print_string
           (indent_string ^ ("Integer(" ^ ((string_of_int i) ^ ")\n")))
@@ -173,6 +189,7 @@ let prettyPrintExpType exp chrMode =
   let map = Hashtbl.create 20 in
   let rec helper exp brackets =
     match exp with
+		| Unit -> print_string "unit"
     | Bool -> print_string "bool"
     | Int -> print_string "int"
     | Function (a, b) ->

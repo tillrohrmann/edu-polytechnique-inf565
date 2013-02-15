@@ -15,6 +15,7 @@ type interpretation_result =
   | Integer of int
   | Function_value of string * program_exp * interpretation_result list
                       * bool
+	| IUnit
 
 (**
 	Unwrap method to retrieve an int from a variable of the form Integer i
@@ -218,6 +219,7 @@ let rec calcClosureDeBruijn boundedThreshold =
 	| Expression_block(e1,e2) ->
 			max (calcClosureDeBruijn boundedThreshold e1)
 				(calcClosureDeBruijn boundedThreshold e2)
+	| Keyword(_) -> 0
 
 (**
 	This function retrieves the first number elements of the list state. 
@@ -249,6 +251,7 @@ let interprete prog =
     function
     | Boolean_constant b -> Boolean b
     | Integer_constant i -> Integer i
+		| Keyword(_) as keyword -> Function_value("x",keyword,closure,false)
     | Variable v ->
         failwith "Program has to be transformed to use De Bruijn indices"
     | DeBruijn_variable (v, i) -> 
@@ -267,6 +270,17 @@ let interprete prog =
           (match result with
            | Boolean b -> if b then helper state [] t else helper state [] e
            | _ -> failwith "If condition has to have a boolean type")
+		| Function_application (Keyword(Print_int), a) ->
+			let aValue = helper state [] a in
+			(match aValue with
+				| Integer i -> print_string ((string_of_int i)^"\n"); IUnit
+				| _ -> failwith("print_int requires argument of type int"))
+		| Function_application(Keyword(Print_bool), a) ->
+			let aValue = helper state [] a in
+			(match aValue with
+				| Boolean true -> print_string "true\n" ; IUnit
+				| Boolean false -> print_string "false\n"; IUnit
+				| _ -> failwith("print_bool requires argument of type bool"))
     | Function_application (f, a) ->
         let functionValue = helper state [] f
         in

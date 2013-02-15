@@ -5,6 +5,7 @@ open Ml_syntax
 %}
 
 %token LAND LOR PLUS MINUS DIV MULT F IF THEN ELSE SEMICOLON
+%token PRINT_INT PRINT_BOOL
 %token LBRACKET RBRACKET
 %token LET EQUALS IN ARROW FUN REC GREATER
 %token TRUE FALSE
@@ -46,9 +47,14 @@ program_expression:
 	| function_application {$1}
 	| binary_operation {$1}
 	| expression_block {$1}
+	| keywords {$1}
 	| variable {$1}
 	| constant {$1}
 	| condition {$1}
+
+keywords:
+	| PRINT_INT %prec TRUE { Keyword(Print_int) }
+	| PRINT_BOOL %prec TRUE { Keyword(Print_bool) }
 
 expression_block:
 	| program_expression SEMICOLON program_expression { Expression_block($1,$3) }

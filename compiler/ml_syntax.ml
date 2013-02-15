@@ -11,6 +11,10 @@ and operation =
 	| LOr
 	| Equals
 	| Greater
+
+and keywords=
+	| Print_int
+	| Print_bool
 	
 and program_exp = 
 	| Integer_constant of int
@@ -28,6 +32,7 @@ and program_exp =
 	(* if condition * then block * else block *)
 	| If_then_else of program_exp*program_exp*program_exp
 	| Expression_block of program_exp*program_exp
+	| Keyword of keywords
 	
 and program = Program of program_exp
 

@@ -16,6 +16,8 @@ and commands =
   | Push of values
   | Rec of commands list
 	| Pop
+	| CPrint_int
+	| CPrint_bool
 
 (* values which can be used in the command stream *)
 and values =
@@ -25,6 +27,7 @@ and values =
 and environment_values =
   | EnvBool of bool
   | EnvInt of int
+	| EnvUnit
   | EnvClosure of commands list * environment_values list
 	(* Closure for recursive definitions *)
   | EnvRecClosure of commands list * environment_values list
@@ -41,6 +44,7 @@ let rec string_of_env_value =
   function
   | EnvBool b -> string_of_bool b
   | EnvInt i -> string_of_int i
+	| EnvUnit -> "()"
   | _ -> "Closure"
 
 (**
@@ -95,6 +99,8 @@ let rec string_of_commands cmds =
     | Push value -> "Push " ^ (string_of_value value)
     | Rec cmds -> "Rec (" ^ ((string_of_commands cmds) ^ ")")
 		| Pop -> "Pop"
+		| CPrint_int -> "Print_int"
+		| CPrint_bool -> "Print_bool"
   in
     match cmds with
     | [] -> ""
@@ -197,6 +203,9 @@ let rec executeStackMachine =
       (Debug.debug ("Push " ^ (string_of_int i));
        executeStackMachine (c, e, ((EnvInt i) :: s), r))
 	| (Pop ::c, e,h::s,r) -> executeStackMachine(c,e,s,r)
+	| (CPrint_int::c,e,EnvInt(i)::s,r) -> print_string ((string_of_int i)^"\n"); executeStackMachine(c,e,EnvUnit::s,r)
+	| (CPrint_bool::c,e,EnvBool(true)::s,r) -> print_string "true\n"; executeStackMachine(c,e,EnvUnit::s,r)
+	| (CPrint_bool::c,e,EnvBool(false)::s,r) -> print_string "false\n"; executeStackMachine(c,e,EnvUnit::s,r)
   | _ -> failwith "Invalid stack machine state.\n"
   
 let execute cmds = executeStackMachine (cmds, [], [], [])
