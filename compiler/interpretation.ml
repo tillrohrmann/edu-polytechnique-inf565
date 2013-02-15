@@ -251,7 +251,7 @@ let interprete prog =
     function
     | Boolean_constant b -> Boolean b
     | Integer_constant i -> Integer i
-		| Keyword(_) as keyword -> Function_value("x",keyword,closure,false)
+		| Keyword(_) as keyword -> Function_value("x",Function_application(keyword,DeBruijn_variable("x",1)),closure,false)
     | Variable v ->
         failwith "Program has to be transformed to use De Bruijn indices"
     | DeBruijn_variable (v, i) -> 

@@ -30,8 +30,8 @@ let rec compileExpression exp =
             | LOr -> [ Op MLOr ]
             | Equals -> [ Op MEquals ]
             | Greater -> [ Op MGreater ]))
-	| Function_application (Keyword(Print_int), a) -> compileExpression a @ [CPrint_int]
-	| Function_application (Keyword(Print_bool), b) -> compileExpression b @ [CPrint_bool]
+	(*| Function_application (Keyword(Print_int), a) -> compileExpression a @ [CPrint_int]
+	| Function_application (Keyword(Print_bool), b) -> compileExpression b @ [CPrint_bool]*)
   | Function_application (f, a) ->
 			(* 1st: argument is placed on the stack. *)
 			(* 2nd: function closure is loaded on the stack. *)
@@ -52,8 +52,8 @@ let rec compileExpression exp =
         ([ Let ] @ ((compileExpression b) @ [ Endlet ]))
 	| Expression_block(e1,e2) ->
 			(compileExpression e1) @ [ Pop ] @ (compileExpression e2)
-	| Keyword(Print_int) -> [ Cur [CPrint_int; Return ] ]
-	| Keyword(Print_bool) -> [ Cur [CPrint_bool; Return ] ]
+	| Keyword(Print_int) -> [ Cur [Access 1;CPrint_int; Return ] ]
+	| Keyword(Print_bool) -> [ Cur [Access 1;CPrint_bool; Return ] ]
   | If_then_else (c, t, e) ->
       let thenCode = compileExpression t in
       let elseCode = compileExpression e
