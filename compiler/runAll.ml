@@ -40,13 +40,16 @@ let main () = (* Parsing arguments *)
             let tok = Lexing.lexeme lexbuf
             in raise (Error (e, (line, cnum, tok))))
      in
-       (Helper.prettyPrintAST ml_prog;
+       (print_string "Parsed AST...\n";
+				Helper.prettyPrintAST ml_prog;
         let e_prog = Elaboration.conditionalTransform ml_prog
         in
-          (Helper.prettyPrintAST e_prog;
+          (print_string "Conditionally transformed AST...\n";
+					Helper.prettyPrintAST e_prog;
            let deBruijn_prog = Elaboration.deBruijnTransform e_prog
            in
-             (Helper.prettyPrintAST deBruijn_prog;
+             (print_string "De Bruijn transformed AST...\n";
+							Helper.prettyPrintAST deBruijn_prog;
               print_string "Typing program...\n";
               let prog_type = Typing.program_type deBruijn_prog
               in
