@@ -62,8 +62,7 @@ let main () = (* Parsing arguments *)
                          ((StackMachine.string_of_commands prog_compiled) ^
                             "\n");
                        print_string "Running stack machine...\n";
-                       StackMachine.execute prog_compiled;
-                       Printf.printf "finished yeah...\n")))))))
+                       StackMachine.execute prog_compiled)))))))
   
 let _ = main ()
   
