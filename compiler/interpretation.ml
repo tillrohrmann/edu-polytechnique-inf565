@@ -15,6 +15,7 @@ type interpretation_result =
   | Integer of int
   | Function_value of string * program_exp * interpretation_result list
                       * bool
+	| Pair_value of interpretation_result*interpretation_result
 	| IUnit
 
 (**
@@ -40,7 +41,7 @@ let check_integer a = match a with | Integer i -> true | _ -> false
 let check_boolean a = match a with | Boolean b -> true | _ -> false
 
 (**
-	Testing function whether the variabl f is of the form Function_value par def closure recursive
+	Testing function whether the variable f is of the form Function_value par def closure recursive
 *)
 let check_function f =
   match f with
@@ -220,6 +221,7 @@ let rec calcClosureDeBruijn boundedThreshold =
 			max (calcClosureDeBruijn boundedThreshold e1)
 				(calcClosureDeBruijn boundedThreshold e2)
 	| Keyword(_) -> 0
+	| Pair(a,b) -> max(calcClosureDeBruijn boundedThreshold a) (calcClosureDeBruijn boundedThreshold b)
 
 (**
 	This function retrieves the first number elements of the list state. 
@@ -257,6 +259,7 @@ let interprete prog =
     | DeBruijn_variable (v, i) -> 
 			(* Access i-1 th element of the state list *)
 			List.nth state (i - 1)
+		| Pair(a,b) -> Pair_value((helper state closure a),(helper state closure b))
     | Anonymous_function (a, d) -> 
 			(* Non recursive function with the current closure *)
 			Function_value (a, d, closure, false)
@@ -281,6 +284,16 @@ let interprete prog =
 				| Boolean true -> print_string "true\n" ; IUnit
 				| Boolean false -> print_string "false\n"; IUnit
 				| _ -> failwith("print_bool requires argument of type bool"))
+		| Function_application(Keyword(First), a) -> 
+			let aValue = helper state [] a in
+			(match aValue with
+				| Pair_value(l,r) -> l
+				| _ -> failwith("fst requires argument of type 'a * 'b"))
+		| Function_application(Keyword(Second), a) -> 
+			let aValue = helper state [] a in
+			(match aValue with
+				| Pair_value(l,r) -> r
+				| _ -> failwith("fst requires argument of type 'a * 'b"))
     | Function_application (f, a) ->
         let functionValue = helper state [] f
         in

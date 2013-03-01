@@ -18,6 +18,9 @@ and commands =
 	| Pop
 	| CPrint_int
 	| CPrint_bool
+	| CPair
+	| CFirst
+	| CSecond
 
 (* values which can be used in the command stream *)
 and values =
@@ -31,6 +34,7 @@ and environment_values =
   | EnvClosure of commands list * environment_values list
 	(* Closure for recursive definitions *)
   | EnvRecClosure of commands list * environment_values list
+	| EnvPair of environment_values*environment_values
 
 (**
 	This function converts a variable of type environment_values into its string
@@ -45,7 +49,8 @@ let rec string_of_env_value =
   | EnvBool b -> string_of_bool b
   | EnvInt i -> string_of_int i
 	| EnvUnit -> "()"
-  | _ -> "Closure"
+	| EnvPair(a,b) -> "("^(string_of_env_value a)^", "^(string_of_env_value b)^")"
+  | _ -> "Function value"
 
 (**
 	This function converts a variable of type values into its string representation.
@@ -101,6 +106,9 @@ let rec string_of_commands cmds =
 		| Pop -> "Pop"
 		| CPrint_int -> "Print_int"
 		| CPrint_bool -> "Print_bool"
+		| CPair -> "Pair"
+		| CFirst -> "First"
+		| CSecond -> "Second"
   in
     match cmds with
     | [] -> ""
@@ -206,6 +214,9 @@ let rec executeStackMachine =
 	| (CPrint_int::c,e,EnvInt(i)::s,r) -> print_string ((string_of_int i)^"\n"); executeStackMachine(c,e,EnvUnit::s,r)
 	| (CPrint_bool::c,e,EnvBool(true)::s,r) -> print_string "true\n"; executeStackMachine(c,e,EnvUnit::s,r)
 	| (CPrint_bool::c,e,EnvBool(false)::s,r) -> print_string "false\n"; executeStackMachine(c,e,EnvUnit::s,r)
+	| (CFirst::c,e,EnvPair(a,b)::s,r) -> executeStackMachine(c,e,a::s,r)
+	| (CSecond::c,e,EnvPair(a,b)::s,r) -> executeStackMachine(c,e,b::s,r)
+	| (CPair::c,e,a::b::s,r) -> executeStackMachine(c,e,EnvPair(a,b)::s,r)
   | _ -> failwith "Invalid stack machine state.\n"
   
 let execute cmds = executeStackMachine (cmds, [], [], [])

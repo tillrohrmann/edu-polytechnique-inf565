@@ -54,6 +54,9 @@ let rec compileExpression exp =
 			(compileExpression e1) @ [ Pop ] @ (compileExpression e2)
 	| Keyword(Print_int) -> [ Cur [Access 1;CPrint_int; Return ] ]
 	| Keyword(Print_bool) -> [ Cur [Access 1;CPrint_bool; Return ] ]
+	| Keyword(First) -> [ Cur [Access 1; CFirst; Return ] ]
+	| Keyword(Second) -> [ Cur [Access 1; CSecond; Return ] ]
+	| Pair(a,b) -> (compileExpression b) @ (compileExpression a) @ [ CPair ]
   | If_then_else (c, t, e) ->
       let thenCode = compileExpression t in
       let elseCode = compileExpression e

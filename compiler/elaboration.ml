@@ -79,6 +79,7 @@ let conditionalTransform prog =
 		| Expression_block (e1, e2) ->
 				Expression_block(conditionalTransformHelper e1,conditionalTransformHelper e2)
 		| Keyword(_) as keyword -> keyword
+		| Pair(a,b) -> Pair(conditionalTransformHelper a, conditionalTransformHelper b)
     | Binary (op, a, b) ->
         let ac = conditionalTransformHelper a in
         let bc = conditionalTransformHelper b
@@ -160,6 +161,7 @@ let deBruijnTransform prog =
 		| Expression_block (e1, e2) ->
 				Expression_block(deBruijnTransformHelper indices e1, deBruijnTransformHelper indices e2)
 		| Keyword(_) as keyword -> keyword
+		| Pair(a,b) -> Pair(deBruijnTransformHelper indices a, deBruijnTransformHelper indices b)
     | If_then_else (c, t, e) ->
         If_then_else ((deBruijnTransformHelper indices c),
           (deBruijnTransformHelper indices t),

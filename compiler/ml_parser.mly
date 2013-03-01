@@ -4,8 +4,8 @@ open Ml_syntax
 
 %}
 
-%token LAND LOR PLUS MINUS DIV MULT F IF THEN ELSE SEMICOLON
-%token PRINT_INT PRINT_BOOL
+%token LAND LOR PLUS MINUS DIV MULT F IF THEN ELSE SEMICOLON COMMA
+%token PRINT_INT PRINT_BOOL FIRST SECOND
 %token LBRACKET RBRACKET
 %token LET EQUALS IN ARROW FUN REC GREATER
 %token TRUE FALSE
@@ -23,7 +23,7 @@ open Ml_syntax
 
 
 %right FUN LET IF
-%left SEMICOLON
+%left SEMICOLON COMMA
 %left EQUALS GREATER
 %left UMINUS UPLUS
 %left LOR
@@ -40,7 +40,6 @@ program:
 	
 
 program_expression:
-	| LBRACKET program_expression RBRACKET {$2}
 	| local_definition {$1}
 	| recursive_function {$1}
 	| anonymous_function {$1}
@@ -51,10 +50,17 @@ program_expression:
 	| variable {$1}
 	| constant {$1}
 	| condition {$1}
+	| pair {$1}
+	| LBRACKET program_expression RBRACKET {$2}
+
+pair:
+	| LBRACKET program_expression COMMA program_expression RBRACKET { Pair($2,$4) }
 
 keywords:
 	| PRINT_INT %prec TRUE { Keyword(Print_int) }
 	| PRINT_BOOL %prec TRUE { Keyword(Print_bool) }
+	| FIRST %prec TRUE { Keyword(First) }
+	| SECOND %prec TRUE { Keyword(Second) }
 
 expression_block:
 	| program_expression SEMICOLON program_expression { Expression_block($1,$3) }

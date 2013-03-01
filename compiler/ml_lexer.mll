@@ -37,8 +37,11 @@ rule token = parse
 	| "else" {ELSE}
 	| ">" {GREATER}
 	| ";" {SEMICOLON}
+	| "," {COMMA}
 	| "print_int" {PRINT_INT}
 	| "print_bool" {PRINT_BOOL}
+	| "fst" {FIRST}
+	| "snd" {SECOND}
 	| identifier {IDENTIFIER(Lexing.lexeme lexbuf)}
 	| integer {INTEGER(int_of_string (Lexing.lexeme lexbuf))}
 	| eof { EOF }

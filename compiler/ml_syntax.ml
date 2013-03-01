@@ -15,6 +15,8 @@ and operation =
 and keywords=
 	| Print_int
 	| Print_bool
+	| First
+	| Second
 	
 and program_exp = 
 	| Integer_constant of int
@@ -33,6 +35,7 @@ and program_exp =
 	| If_then_else of program_exp*program_exp*program_exp
 	| Expression_block of program_exp*program_exp
 	| Keyword of keywords
+	| Pair of program_exp*program_exp
 	
 and program = Program of program_exp
 

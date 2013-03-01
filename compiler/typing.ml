@@ -39,6 +39,7 @@ let rec containedIn a b =
   | Function (c, d) ->
       (identicalTypes a c) ||
         ((identicalTypes a d) || ((containedIn a c) || (containedIn a d)))
+	| PairType(c,d) -> (identicalTypes a c) || (identicalTypes a d) || (containedIn a c) || (containedIn a d)
   | _ -> false
 
 (**
@@ -99,6 +100,7 @@ let getType mapping a =
 						(* efficient *)
 						(Hashtbl.replace !mapping i result; result))
     | Function (p, b) -> Function ((helper p p), (helper b b))
+		| PairType (l,r) -> PairType((helper l l),(helper r r))
     | _ -> cur
   in helper a a
 
@@ -117,9 +119,9 @@ let updateMapping mapping a b =
 (**
 	This function performs the type unification algorithm on two type expressions
 	a and b. If both types represent a functional type, then the parameter type
-	and the definition type of both types have to be unified. If not, then the
-	unification is achieved by simply calling the union algorithm. If the types
-	are unifiable, then the mapping of possible type variables is set to this 
+	and the definition type of both types have to be unified. The same holds for pairs.
+  If not, then the unification is achieved by simply calling the union algorithm. 
+	If the types are unifiable, then the mapping of possible type variables is set to this 
 	new unified type. 
 	
 	@param mapping hash map containing the type variable, type mapping
@@ -143,6 +145,16 @@ let rec unify mapping a b =
                    | None -> None)
               | None -> None)
          | _ -> union a_type b_type)
+		| PairType (c,d) ->
+			(match b_type with
+				| PairType(e,f) ->
+					(match unify mapping c e with
+						| Some t ->
+							(match unify mapping d f with
+								| Some tb -> Some(PairType(t,tb))
+								| None -> None)
+						| None -> None)
+				| _ -> union a_type b_type)
     | _ -> union a_type b_type
   in
     ((match result with
@@ -165,6 +177,7 @@ let rec string_of_ml_types =
   | Bool -> "bool"
   | Function (p, b) ->
       (string_of_ml_types p) ^ (" -> " ^ (string_of_ml_types b))
+	| PairType(a,b) -> (string_of_ml_types a) ^ ("*") ^ (string_of_ml_types b)
   | Type_variable c -> "'" ^ (string_of_int c)
   | Universal t -> string_of_ml_types t
 	| Unit -> "unit"
@@ -222,6 +235,7 @@ let generalizeType env mapping t =
     function
     | Universal t -> helper t
     | Function (p, b) -> Function ((helper p), (helper b))
+		| PairType(l,r) -> PairType((helper l), (helper r))
     | Type_variable i ->
         if
           (envContainsType env (Type_variable i))
@@ -356,6 +370,15 @@ let rec expression_type env mapping exp =
 			expression_type env mapping e2
 	| Keyword(Print_int) -> Function(Int,Unit)
 	| Keyword(Print_bool) -> Function(Bool,Unit)
+	| Keyword(First) -> 
+		let typeVarA = getNewTypeVariable mapping in
+		let typeVarB = getNewTypeVariable mapping in
+		Function(PairType(typeVarA,typeVarB),typeVarA)
+	| Keyword(Second) -> 
+		let typeVarA = getNewTypeVariable mapping in
+		let typeVarB = getNewTypeVariable mapping in
+		Function(PairType(typeVarA,typeVarB),typeVarB)
+	| Pair(a,b) -> PairType(expression_type env mapping a, expression_type env mapping b)
   | If_then_else (c, t, e) ->
       let condition_type = expression_type env mapping c
       in

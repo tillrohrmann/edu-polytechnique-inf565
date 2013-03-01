@@ -46,6 +46,8 @@ let getKeywordString =
 	function
 		| Print_int -> "print_int"
 		| Print_bool -> "print_bool"
+		| First -> "fst"
+		| Second -> "snd"
 
 (**
 	This function pretty prints a given expression of type program_expression at a given
@@ -116,6 +118,12 @@ let rec printProgramExpression indent expression =
 						printProgramExpression (indent+1) e2;
 						print_string (indent_string^")\n")
 			| Keyword(keyword) -> print_string ((getKeywordString keyword)^"\n")
+			| Pair(a,b) -> 
+				print_string "Pair(\n";
+				printProgramExpression (indent+1) a;
+				print_string (indent_string^",\n");
+				printProgramExpression (indent+1) b;
+				print_string (indent_string^")\n")
 			| DeBruijn_variable (v, c) ->
 		     print_string
 		       ("Variable(" ^ (v ^ ("," ^ ((string_of_int c) ^ ")\n")))))
@@ -175,6 +183,12 @@ let rec prettyPrintInterpretationResult indent result =
             | h :: t ->
                 (prettyPrintInterpretationResult (indent + 1) h; helper t))
          in (helper closure; print_string (indent_string ^ ")\n")))
+		| Pair_value(a,b) ->
+			print_string (indent_string^"Pair(\n");
+			prettyPrintInterpretationResult (indent+1) a;
+			print_string (indent_string^",\n");
+			prettyPrintInterpretationResult (indent+1) b;
+			print_string (indent_string^")\n")
 
 (**
 	This function pretty prints a type expression. 
@@ -187,7 +201,7 @@ let rec prettyPrintInterpretationResult indent result =
 let prettyPrintExpType exp chrMode =
   let start = ref (Char.code 'a') in
   let map = Hashtbl.create 20 in
-  let rec helper exp brackets =
+  let rec helper exp brackets pbrackets =
     match exp with
 		| Unit -> print_string "unit"
     | Bool -> print_string "bool"
@@ -195,10 +209,16 @@ let prettyPrintExpType exp chrMode =
     | Function (a, b) ->
         (if brackets then print_string "(" else ();
 				(* a parameter can be of a function type, thus we have to print it with brackets *)
-         helper a true;
+         helper a true false;
          print_string " -> ";
-         helper b false;
+         helper b false pbrackets;
          if brackets then print_string ")" else ())
+		| PairType (a,b) -> 
+			(if pbrackets then print_string "(" else ();
+			helper a false true;
+			print_string " * ";
+			helper b true false;
+			if pbrackets then print_string ")" else ())
     | Type_variable i ->
         if chrMode
         then
@@ -213,7 +233,7 @@ let prettyPrintExpType exp chrMode =
                   in (start := !start + 1; result))
            in print_string ("'" ^ (Char.escaped sign)))
         else print_string ("'" ^ (string_of_int i))
-    | Universal t -> helper t false
-  in (helper exp false; print_string "\n")
+    | Universal t -> helper t brackets pbrackets
+  in (helper exp false false; print_string "\n")
   
 
