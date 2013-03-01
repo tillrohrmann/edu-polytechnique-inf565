@@ -119,7 +119,8 @@ let updateMapping mapping a b =
 (**
 	This function performs the type unification algorithm on two type expressions
 	a and b. If both types represent a functional type, then the parameter type
-	and the definition type of both types have to be unified. The same holds for pairs.
+	and the definition type of both types have to be unified. The same holds for pairs,
+	just that the respective first and second elements of both pairs are unified.
   If not, then the unification is achieved by simply calling the union algorithm. 
 	If the types are unifiable, then the mapping of possible type variables is set to this 
 	new unified type. 

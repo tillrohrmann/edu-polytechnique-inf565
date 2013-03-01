@@ -50,7 +50,7 @@ let rec string_of_env_value =
   | EnvInt i -> string_of_int i
 	| EnvUnit -> "()"
 	| EnvPair(a,b) -> "("^(string_of_env_value a)^", "^(string_of_env_value b)^")"
-  | _ -> "Function value"
+  | _ -> "<fun>"
 
 (**
 	This function converts a variable of type values into its string representation.
