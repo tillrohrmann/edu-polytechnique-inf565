@@ -1,0 +1,221 @@
+\documentclass[a4paper, 12pt, titlepage]{article}
+
+% Including needed packages
+\usepackage[margin=2cm]{geometry}
+\usepackage{amsmath}
+
+\title
+{{\em INF 565 - Verification}\\
+Mini-project - Compiler for a subset of ML\\
+{\bf Description}}
+\author{ROHRMANN Till}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Questions treated}
+
+I finished all questions including the first two extensions "effets de bords et affichages" and "ajout de paires".
+
+\section{Architecture}
+
+The overall program structure is oriented at the problem and its individual tasks. The type for the AST is defined in the file ml\_syntax.ml. The corresponding parser and lexer are given by the files ml\_parser.mly and ml\_lexer.mll. The difficulty of the parser was to get the precedence order of the different production rules right. The file helper.ml contains all functions which are used to output the result to stdout. Thus, the function prettyPrintAST which takes an AST an outputs it on stdout can be found there as well.
+
+The file elaboration.ml contains the functions conditionalTransform and deBruijnTransform. The former function takes an AST and replaces conditional expressions with if then else constructs as it was stated in the task description. The latter function annotates every variable with its corresponding De Bruijn index which allows later an easy representation of the variables on a stack.
+
+The file interpretation.ml contains all the type definitions and functions for interpreting an De Bruijn transformed AST. From now on, we'll consider that all ASTs are De Bruijn transformed without noticing it further. The state of the interpretation is represented by a list containing for each De Bruijn index a value of the interpretation result type. This list can also be seen as a stack with random access. Due to the properties of the De Bruijn notation there is a direct mapping between the De Bruijn index and the index of the element in the list. Furthermore, it is necessary to keep for some operations a separate prefix of the list, which can directly be used as the closure of a partial function application. A given AST is interpreted by the function interpret. The interpretation result type supports unit, booleans, integers, function values and pair values which is also the set of all types representable by the implemented subset of ML. Information for the provided examples can be found in the respective section at the end of this document. The interpretation result is printed on stdout by the function prettyPrintInterpretationResult implemented in the file helper.ml. A subtle detail is the implementation of recursive function calls which have to be treated slightly differently from simple function calls. Since recursive functions have to be able to call themselves one always has to append the function value itself at the beginning of the state list before one inserts the arguments of the function at the current head position. Furthermore, one has to calculate for all recursive functions its closure because these values have to precede the function value on the stack for each function call. To sum it up: The stack frame for every recursive function call looks like that arguments::function value::closure::stack.
+
+The type inference is implemented in the files typing.ml and types.ml. Types.ml contains the supported types: Integer, boolean, unit, function type, pair type, type variable and universal quantified type expressions which are important for the Hindley-Milner type inference algorithm. The Hindley-Milner algorithm is implemented by the function expression\_type in the file typing.ml which calculates for a given expression its type. For a given AST the function program\_type, implemented in the same file, calculates the tree's type. The challenging part was the implementation of the substitution due to a unification operation. The current implementation works the following way: Every type variable is represented by a unique integer and the algorithm maintains a mapping between the type variables and its currently associated types. Initially this mapping is the identity. Every time a type variable is instantiated to a new type its mapping is updated. To calculate the current type assignment of a type variable, one only has to follow the mapping until one reaches a fix point. This is due to the fact that several type variables can be chained because of several unification operations. The type result is printed to stdout by the function prettyPrintExpType which can be found in the file helper.ml.
+
+The stack machine is realized in the file stackMachine.ml. The implementation follows exactly the given specification (see commentary section for a few remarks concerning minor flaws in the description). The function executeStackMachine expects a list of stack machine instructions which are then executed. These instructions can be generated from an AST by the function compileProgram in the file compiler.ml. CompileProgram calls compileExpression with the program expression. Within that function all language constructs are translated into their equivalent stack machine representations. In order to implement recursive functions a new command Rec was introduced which has the same semantic as Cur just with the difference that the result is of type EnvRecClosure instead of EnvClosure. That distinction allows the recognition of recursive function calls for which the closure itself has to be additionally pushed on the execution stack in order to be able to make recursive calls.
+
+\subsection{Extensions}
+
+\subsubsection{"Effets de bords et affichages"}
+
+For the support of blocks of expressions, the parser specification was adjusted. The integration into the different parts, elaboration, interpretation, compilation and stack machine was straightforward. Only for the typing it is noteworthy that even though the type of a expression block is determined by its last expression one has to calculate the type of all the other expressions as well. The reason for that procedure is that a previous expression might already contain type constraints for following expressions. If one did not consider those constraints one would likely calculate a wrong type. For the output two terminals print\_int and print\_bool were added to the grammar. Those keywords represent a printing function for integers and a printing function for booleans. The first function has the type int -> unit and the latter bool -> unit. Both functions are subject to type checking to guarantee the correct function application and can also be used as a function value. In order to adapt the stack machine for the extensions three new stack machine commands were introduced: Pop, CPrint\_int and CPrint\_bool. Pop pops the first element from the stack, CPrint\_int pops and prints the top element of the stack as well as CPrint\_bool. Thus the transitions of these commands are defined as following:
+
+\begin{description}
+	\item[Pop] $(Pop::c, env, v::s, r) -> (c, env, s, r)$
+	\item[CPrint\_int] $(CPrint\_int::c, env, v::s, r) -> "print v"+(c,env,s,r)$
+	\item[CPrint\_bool] $(CPrint\_bool::c, env, v::s, r) -> "print v"+(c,env,s,r)$
+\end{description}
+
+
+\subsubsection{Ajout des paires}
+
+For the support of pairs, the parser specification was adjusted. Furthermore, a new type PairType, a new interpretation result Pair\_value and a new stack machine result EnvPair was introduced. To adapt all the functions for pairs one only had to add a new matching case for pairs in which one applied the algorithm on both elements. To access the pair elements two terminals fst and snd were added to the grammar. They are treated as keywords (functions provided by the language environment). They have the types 'a * 'b -> 'a and 'a * 'b -> 'b respectively. The function fst returns the first element of a pair and the function snd returns the second element of a pair. Both keywords are treated like function values and thus integrate smoothly into the existing language. The stack machine was extended by three new commands to realize pairs: CPair, CFirst, CSecond. CPair takes two values from the stack and forms from them a pair. CFirst takes a value from the stack, which has to be a pair, and returns its first element. CSecond does the same only that it returns the second element. Thus the transitions of these commands are defined as following:
+
+\begin{description}
+	\item[CPair] $(CPair::c, env, a::b::s, r) -> (c, env, EnvPair(a,b)::s, r)$
+	\item[CFirst] $(CFirst::c, env, EnvPair(a,b)::s, r) -> (c, env, a::s, r)$
+	\item[CSecond] $(CSecond::c, env, EnvPair(a,b)::s, r) -> (c, env, b::s, r)$
+\end{description}
+
+\section{Running the programs}
+
+Running the makefile produces 6 executables: runConditionalTransformation, runDeBruijnTransformation, runInterpretation, runTyping, runStackMachine and runAll. All of them have in common, that they are called with a text file containing the source code of a program written in the supported subset of ML. The different executables represent basically the different stages of the program:
+
+runConditionalTransformation: This executable parses the provided source code to generate the corresponding AST. It then applies the conditional transformation on the AST and finally prints the result to stdout.
+
+runDeBruijnTransformation: This executable parses the provided source code to generate the corresponding AST. It then applies the De Bruijn index transformation on the AST and finally prints the result to stdout.
+
+runInterpretation: This executable parses the provided source code to generate the corresponding AST. It then applies the conditional and De Bruijn index transformation on the AST. Afterwards, the transformed AST is interpreted and the result is printed to stdout.
+
+runTyping: This executable parses the provided source code to generate the corresponding AST. It then applies the conditional and De Bruijn index transformation on the AST. Afterwards, it types the AST and prints the result to stdout.
+
+runStackMachine: This executable parses the provided source code to generate the corresponding AST. It then applies the conditional and De Bruijn index transformation on the AST. In order to guarantee the correct execution on the stack machine, the type of the AST is checked and printed on stdout. If no typing error occurs, the AST is compiled to stack machine commands and then executed on the stack machine. The final result of that execution is then printed on stdout.
+
+runAll: This executable combines all tasks together and outputs at every step the current result. First it parses the provided source code to generate the corresponding AST. The AST is then printed to stdout. Then the program applies the conditional transformation to the AST and prints the result. Then the program applies the De Bruijn index transformation and prints the result. The transformed AST is then typed and the type of the program is printed. Afterwards, the program is interpreted and the interpretation result is printed to stdout. Before it is finally executed on the stack machine, it is compiled and the instruction sequence is printed to stdout. Last but not least the compiled program is executed on the stack machine giving a result which is printed to stdout.
+ 
+\section{Commentaries}
+
+In the course of the mini project I came across the following minor flaws in the problem description: In the specification of the ML subset, there is the specification of the if then else construct missing. Furthermore, in the definition of the stack machine Access and Push operation it was forgotten to concatenate the new stack value with the old stack value s instead of just keeping the new value. Besides of that, I found the explanations of all questions very instructive and helpful. The part which posed me the biggest problems was the unification of type variables in the Hindley-Milner algorithm. There it took me quite some time to come up with a good solution for the mapping between type variables and there assigned types. 
+
+\section{Examples}
+
+There are some example files provided which follow the naming convention example*. In the following the main results of the examples will be given, which all have been obtained by running ./runAll [exampleFile]. This means that the results are obtained by interpreting the code as well as by executing the compiled code on the stack machine.
+
+\paragraph{example1}
+\begin{verbatim}
+let x = true in if x then 1 else 0
+
+type: int
+result: 1
+\end{verbatim}
+
+\paragraph{example2}
+\begin{verbatim}
+let f = fun x -> x+x in f 2 + 3
+
+type: int
+result: 7
+\end{verbatim}
+
+\paragraph{example3} 
+Demonstration of partial function and function values
+\begin{verbatim}
+let f = fun x -> fun y -> x+y in let g = fun x -> fun y -> x y in g (f 10) (-10)
+
+type: int
+result: 0
+\end{verbatim}
+
+\paragraph{exampleShortCircuit}
+\begin{verbatim}
+let rec f x = if x > 0 then true || (print_int x; f (x-1)) else false in f 10
+
+type: bool
+output: "nothing"
+result: true
+\end{verbatim}
+
+\paragraph{exampleFibonacci}
+\begin{verbatim}
+let rec f x = if x > 1 then f(x-1)+f(x-2) else x in f 10
+
+type: int
+result: 55
+\end{verbatim}
+
+\paragraph{exampleIdentity}
+\begin{verbatim}
+let rec f x = x in f print_int 1
+
+type: unit
+output: 1
+result: ()
+\end{verbatim}
+
+\paragraph{examplePair} 
+More efficient variant of exampleFibonacci
+\begin{verbatim}
+let rec f x = if x > 1 then let t = f (x-1) in ((fst t) + (snd t),fst t) 
+else (1,0) in fst (f 10)
+
+type: int
+result: 55
+\end{verbatim}
+
+\paragraph{examplePair2}
+\begin{verbatim}
+let f = fun x -> fun y -> if fst x = true then snd x + y else snd x - y 
+in f (true,10) 10
+
+type: int
+result: 20
+\end{verbatim}
+
+\paragraph{exampleExpressionBlock}
+\begin{verbatim}
+let f = fun x -> if x=true then print_bool x; (x,false) else 
+print_int 10; (x,true) in f false; f true
+
+type: bool * bool
+output: 
+10
+true
+result: (true, false)
+\end{verbatim}
+
+\paragraph{examplePartialFunction}
+\begin{verbatim}
+let p = (fun x -> fun y -> fun z -> x+y+z) 1 2 in p 3
+
+type: int
+result: 6
+\end{verbatim}
+
+\paragraph{exampleClosure}
+\begin{verbatim}
+let x = 10 in let rec f y = if y > 0 then x + f (y-1) else 0 in f 5
+
+type: int
+result: 50
+\end{verbatim}
+
+\paragraph{exampleTyping}
+\begin{verbatim}
+fun x -> fun y -> if fst x = true then snd x + y else snd x - y
+
+type: bool * int -> int -> int
+\end{verbatim}
+
+\paragraph{exampleTyping2}
+\begin{verbatim}
+let rec f x =  if fst x > 0 then f (fst x - 1, snd x) else 
+if snd (snd x) = true then 0 else 42 in f
+
+type: int * 'a * bool -> int
+\end{verbatim}
+
+\paragraph{exampleTypingError}
+\begin{verbatim}
+(fun x -> print_int (fst x); print_bool (snd x)) (10,10)
+
+typing error: The argument has type int*int but an 
+expression of type int*bool was expected
+\end{verbatim}
+
+\paragraph{exampleTypingError2}
+
+\begin{verbatim}
+let g = fun x -> fun y -> x y in g (fun x -> 2*x) true
+
+typing error: The argument has type bool but an expression of type 
+int was expected
+\end{verbatim}
+
+\paragraph{exampleTypingError3}
+\begin{verbatim}
+let x = 10 in let f = fun x -> 2*x in if x > 0 then true && f (x-1) else 0
+
+Typing error: Else expression has type bool but an expression of type 
+int was expected
+\end{verbatim}
+
+Explanation: The "true \&\& f (x-1)" will be converted into "if true then f (x-1) else false" and f has the type int $->$ int. Hence, the if then else construct has not a consistent type.
+
+\end{document}
