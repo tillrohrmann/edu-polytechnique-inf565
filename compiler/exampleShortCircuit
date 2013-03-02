@@ -1,0 +1,1 @@
+let rec f x = if x > 0 then true || (print_int x; f (x-1)) else false in f 10

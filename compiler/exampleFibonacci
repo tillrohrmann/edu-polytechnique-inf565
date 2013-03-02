@@ -1,0 +1,1 @@
+let rec f x = if x > 1 then f(x-1)+f(x-2) else x in f 10

@@ -42,7 +42,7 @@ let main () = (* Parsing arguments *)
 		    let deBruijn_prog = Elaboration.deBruijnTransform e_prog
 		    in
 			 		print_string "Interpreting program...\n";
-			 		let prog_result = Interpretation.interprete deBruijn_prog
+			 		let prog_result = Interpretation.interpret deBruijn_prog
 			 		in
 			 			Helper.prettyPrintInterpretationResult 0 prog_result)
 							

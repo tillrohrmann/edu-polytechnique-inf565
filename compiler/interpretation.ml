@@ -248,7 +248,7 @@ let rec head state number =
 	
 	@return result of type interpretation_result
 *)
-let interprete prog =
+let interpret prog =
   let rec helper state closure =
     function
     | Boolean_constant b -> Boolean b

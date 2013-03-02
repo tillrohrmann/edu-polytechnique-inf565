@@ -1,0 +1,1 @@
+let f = fun x -> if x=true then print_bool x; (x,false) else print_int 10; (x,true) in f false; f true

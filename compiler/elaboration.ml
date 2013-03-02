@@ -85,36 +85,8 @@ let conditionalTransform prog =
         let bc = conditionalTransformHelper b
         in
           (match op with
-           | LAnd ->
-               (match ac with
-								(* Simplifications if the left side is evaluated to a boolean constant *)
-                | Boolean_constant false -> Boolean_constant false
-                | Boolean_constant true ->
-                    (match bc with
-                     | Boolean_constant false -> Boolean_constant false
-                     | Boolean_constant true -> Boolean_constant true
-                     | _ -> bc)
-                | _ ->
-                    (match bc with
-										(* Simplifications if the right side is evaluated to a boolean constant *)
-                     | Boolean_constant false -> Boolean_constant false
-                     | Boolean_constant true -> ac
-                     | _ -> If_then_else (ac, bc, (Boolean_constant false))))
-           | LOr ->
-               (match ac with
-								(* Simplifications if the left side is evaluated to a boolean constant *)
-                | Boolean_constant true -> Boolean_constant true
-                | Boolean_constant false ->
-                    (match bc with
-                     | Boolean_constant false -> Boolean_constant false
-                     | Boolean_constant true -> Boolean_constant true
-                     | _ -> bc)
-                | _ ->
-                    (match bc with
-										(* Simplifications if the right side is evaluated to a boolean constant *)
-                     | Boolean_constant true -> Boolean_constant true
-                     | Boolean_constant false -> ac
-                     | _ -> If_then_else (ac, (Boolean_constant true), bc)))
+           | LAnd -> If_then_else(ac,bc,(Boolean_constant false))
+           | LOr -> If_then_else(ac,(Boolean_constant true), bc)
            | _ -> Binary (op, ac, bc))
   in match prog with | Program e -> Program (conditionalTransformHelper e)
   

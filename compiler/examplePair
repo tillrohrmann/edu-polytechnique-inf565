@@ -1,0 +1,1 @@
+let rec f x = if x > 1 then let t = f (x-1) in ((fst t) + (snd t),fst t) else (1,0) in fst (f 10)

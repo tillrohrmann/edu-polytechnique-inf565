@@ -1,0 +1,1 @@
+(fun x -> print_int (fst x); print_bool (snd x)) (10,10)
